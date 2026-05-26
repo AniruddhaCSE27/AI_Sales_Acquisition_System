@@ -1,0 +1,15 @@
+﻿.venv
+venv
+__pycache__
+.pytest_cache
+node_modules
+dist
+build
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+.env
+dist/
+build/

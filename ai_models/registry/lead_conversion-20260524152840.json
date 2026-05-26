@@ -1,0 +1,27 @@
+{
+  "model_name": "lead_conversion",
+  "model_type": "logistic_regression",
+  "version": "20260524152840",
+  "artifact_path": "ai_models\\registry\\lead_conversion_logistic_regression.joblib",
+  "metrics": {
+    "accuracy": 0.7333,
+    "roc_auc": 0.8576,
+    "baseline_roc_auc": 0.8576,
+    "training_rows": 240
+  },
+  "feature_order": [
+    "source",
+    "publisher",
+    "course",
+    "city",
+    "budget",
+    "lead_age_hours",
+    "call_attempts",
+    "response_status",
+    "follow_up_count",
+    "whatsapp_response",
+    "counsellor_outcome",
+    "engagement_score"
+  ],
+  "registered_at": "2026-05-24T15:28:40.755932"
+}

@@ -1,0 +1,24 @@
+{
+  "version": "20260524133406",
+  "models": {
+    "logistic_regression": {
+      "metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "artifact_path": "ai_models\\registry\\logistic_regression-20260524133406.pkl"
+    },
+    "random_forest": {
+      "metrics": {
+        "accuracy": 0.75,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6667
+      },
+      "artifact_path": "ai_models\\registry\\random_forest-20260524133406.pkl"
+    }
+  },
+  "active_model": "logistic_regression"
+}
