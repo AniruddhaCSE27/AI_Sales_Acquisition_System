@@ -22,6 +22,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       if (refreshRes.ok) {
         const data = await refreshRes.json();
         localStorage.setItem("token", data.access_token);
+        document.cookie = `leadforge_access=${data.access_token}; path=/; max-age=1800; SameSite=Lax`;
         document.cookie = `leadforage_access=${data.access_token}; path=/; max-age=1800; SameSite=Lax`;
         return api<T>(path, init);
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, FileText, Loader2, PhoneCall, Settings, Upload, Users } from "lucide-react";
+import { BarChart3, FileText, Flame, Lightbulb, Loader2, PhoneCall, PhoneForwarded, Settings, TrendingUp, Upload, Users } from "lucide-react";
 import { Card, Button, Input } from "@/components/ui";
 import { api } from "@/lib/api";
 
@@ -70,14 +70,14 @@ export function PageShell({ title }: { title: keyof typeof titleIcon }) {
   return (
     <main className="mx-auto max-w-7xl px-5 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold"><Icon className="h-6 w-6 text-primary" /> {title}</h1>
+        <div><h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight"><Icon className="h-6 w-6 text-primary" /> {title}</h1>{title === "AI Insights" && <p className="mt-1 text-sm text-slate-500">Actionable sales intelligence generated from current CRM performance.</p>}</div>
         {title === "Reports" && <Button onClick={generateReport}>Generate weekly report</Button>}
       </div>
 
       {loading && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading live CRM data</div>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
-      {dashboard && (
+      {dashboard && title !== "AI Insights" && (
         <div className="grid gap-4 md:grid-cols-4">
           {kpis.slice(0, 8).map(([label, value]) => (
             <Card key={label}>
@@ -102,11 +102,18 @@ export function PageShell({ title }: { title: keyof typeof titleIcon }) {
       )}
 
       {title === "AI Insights" && dashboard && (
-        <Card className="mt-6">
-          <h2 className="font-semibold">Manager summary</h2>
-          <p className="mt-3 text-sm text-slate-600">Hot leads: {dashboard.kpis.hot_leads}. Conversion rate: {dashboard.kpis.conversion_rate}%. Predicted revenue: {formatValue(dashboard.kpis.predicted_revenue)}.</p>
-          <p className="mt-3 text-sm text-slate-600">{dashboard.kpis.total_leads ? "Next best action: work highest scoring follow-ups first and review sources with below-average probability." : "No leads exist yet. Upload publisher data or add the first lead to unlock predictions."}</p>
-        </Card>
+        <>
+          <div className="grid gap-4 md:grid-cols-3">
+            <InsightKpi icon={Flame} label="Hot leads" value={formatValue(dashboard.kpis.hot_leads || 0)} tone="rose" />
+            <InsightKpi icon={TrendingUp} label="Conversion rate" value={`${formatValue(dashboard.kpis.conversion_rate || 0)}%`} tone="emerald" />
+            <InsightKpi icon={PhoneForwarded} label="Follow-ups due" value={formatValue(dashboard.kpis.followups_due || dashboard.kpis.due_followups || 0)} tone="amber" />
+          </div>
+          <Card className="mt-6 shadow-sm">
+            <div className="flex items-start gap-3"><span className="rounded-md bg-primary/10 p-2 text-primary"><Lightbulb className="h-4 w-4" /></span><div><h2 className="font-semibold tracking-tight">Recommended focus</h2><p className="mt-1 text-xs text-slate-500">Priorities grounded in current CRM activity</p></div></div>
+            <p className="mt-4 text-sm text-slate-600">Predicted revenue: {formatValue(dashboard.kpis.predicted_revenue || 0)}.</p>
+            <p className="mt-2 text-sm text-slate-600">{dashboard.kpis.total_leads ? "Work the highest-scoring follow-ups first, then review acquisition sources with below-average probability." : "Add or import the first lead to unlock actionable intelligence."}</p>
+          </Card>
+        </>
       )}
 
       {title === "Publishers" && <EntityList rows={publishers} empty="No publishers yet. They will appear when leads are imported or added with a publisher." />}
@@ -115,6 +122,11 @@ export function PageShell({ title }: { title: keyof typeof titleIcon }) {
       {title === "Settings" && <SettingsPanel />}
     </main>
   );
+}
+
+function InsightKpi({ icon: Icon, label, value, tone }: { icon: any; label: string; value: string; tone: "rose" | "emerald" | "amber" }) {
+  const tones = { rose: "bg-rose-50 text-rose-700", emerald: "bg-emerald-50 text-emerald-700", amber: "bg-amber-50 text-amber-700" };
+  return <Card className="shadow-sm"><div className="flex items-center justify-between gap-3"><p className="text-xs font-medium uppercase text-slate-500">{label}</p><span className={`rounded-md p-2 ${tones[tone]}`}><Icon className="h-4 w-4" /></span></div><p className="mt-3 text-2xl font-semibold tracking-tight">{value}</p></Card>;
 }
 
 function Meter({ label, value, max }: { label: string; value: number; max: number }) {

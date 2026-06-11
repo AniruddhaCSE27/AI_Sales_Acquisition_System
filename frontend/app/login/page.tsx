@@ -16,8 +16,9 @@ export default function LoginPage() {
     try {
       const data = await api<{ access_token: string; refresh_token: string; role: string }>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
       localStorage.setItem("token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      if (data.refresh_token) localStorage.setItem("refresh_token", data.refresh_token);
       localStorage.setItem("role", data.role);
+      document.cookie = `leadforge_access=${data.access_token}; path=/; max-age=1800; SameSite=Lax`;
       document.cookie = `leadforage_access=${data.access_token}; path=/; max-age=1800; SameSite=Lax`;
       const next = new URLSearchParams(window.location.search).get("next") || "/";
       router.push(next);
@@ -29,8 +30,13 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-screen place-items-center px-5">
       <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold">LeadForage AI</h1>
+        <h1 className="text-2xl font-semibold">LeadForge AI</h1>
         <p className="mt-2 text-sm text-slate-500">Forge conversations into conversions with autonomous sales intelligence.</p>
+        <div className="mt-5 rounded-md border border-border bg-slate-50 p-3 text-sm">
+          <p className="font-medium">Demo Login</p>
+          <p className="mt-1 text-slate-600">admin@demo.com</p>
+          <p className="text-slate-600">Password123!</p>
+        </div>
         <div className="mt-6 space-y-4">
           <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />

@@ -1,181 +1,237 @@
-# LeadForage AI
+# LeadForge AI
+
+![Python](https://img.shields.io/badge/Python-3.11-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![Next.js](https://img.shields.io/badge/Next.js-Frontend-black) ![Streamlit](https://img.shields.io/badge/Streamlit-Ops_App-ff4b4b) ![Docker](https://img.shields.io/badge/Docker-Compose-blue) ![Tests](https://img.shields.io/badge/Tests-Pytest-success)
 
 Forge conversations into conversions with autonomous sales intelligence.
 
-Production-grade AI Sales Intelligence SaaS for education sales teams. The platform combines CRM workflows, JWT/RBAC, multi-tenant data boundaries, Twilio voice streams, Whisper call intelligence, live telecaller copilot, WhatsApp automation, manager RAG, Celery workers, retraining pipelines, Streamlit operations, Docker, CI/CD, and observability.
+LeadForge AI is a production-style enterprise sales intelligence platform for education sales teams, combining CRM workflows, authentication, RBAC, customer memory, lead intelligence, follow-up generation, RAG knowledge base, manager copilots, background jobs, observability, and deployment assets.
+
+## Resume Value
+
+The strongest full-stack SaaS project in the workspace, showing backend architecture, frontend integration, Docker orchestration, MLOps-style retraining, auth, workers, and observability.
+
+## Features
+
+- JWT authentication with refresh and logout flows.
+- Role-based workflows with V3 ADMIN, MANAGER, and AGENT semantics mapped to existing roles for backward compatibility.
+- Lead CRUD, import preview, bulk upload, timeline, and scoring.
+- Customer Memory APIs for objections, sentiment, budget, preferred contact time, summaries, and next actions.
+- AI lead intelligence for score explanations, sentiment, intent, objections, and next best action.
+- AI follow-up generation for WhatsApp messages, email, and call scripts.
+- LeadForge Voice Agent for deterministic/OpenAI-assisted call scripts, objection intelligence, safe simulations, and consent-gated Twilio calls.
+- RAG knowledge base upload, vector search, and ask-with-citations APIs.
+- Manager Copilot analytics for best agents, hot leads, follow-ups due, objection analytics, and conversion analytics.
+- Polished operations dashboard with at-a-glance Hot Leads, Conversion Rate, Follow-ups Due, AI Insights, Customer Memory, and Manager Copilot views.
+- AI manager chat, RAG, recommendations, and lead intelligence.
+- Celery workers for reports, ML jobs, notifications, and reindexing.
+- Docker Compose stack with Postgres, Redis, backend, frontend, Nginx, Prometheus, and Grafana, plus production Compose.
+
+## Business Impact
+
+- Models a real sales operations platform for education teams managing leads, calls, and manager oversight.
+- Connects AI capabilities to measurable workflows: scoring, recommendations, reporting, and call intelligence.
+- Shows production awareness with auth, RBAC, background workers, observability, and container orchestration.
 
 ## Architecture
 
-- Frontend: Next.js SaaS dashboard on port `3000`
-- Backend: FastAPI API on port `8000`
-- Database: PostgreSQL 16 with pgvector
-- Cache/queue: Redis 7 and Celery worker/beat
-- Reverse proxy: Nginx on port `8080`
-- Operations portal: Streamlit on port `8501`
-- Metrics: Prometheus on port `9090`
-- Dashboards: Grafana on port `3001`
-- AI services: OpenAI GPT and Whisper with deterministic offline fallback paths
-- Voice: Twilio calls and Media Streams WebSocket ingestion
-- ML: LightGBM/XGBoost-preferred lead conversion scoring with Logistic Regression baseline and model registry
-
-## Production Upgrade Reports
-
-- `PRODUCTION_AI_UPGRADE_REPORT.md`
-- `MLOPS_REPORT.md`
-- `DEPLOYMENT_READY.md`
-- `TEST_REPORT.md`
-- `USER_WORKFLOW_GUIDE.md`
-
-## Quick Start
-
-```powershell
-docker compose up --build -d
-docker compose exec -T backend sh -c "PYTHONPATH=/app python scripts/seed.py"
+```mermaid
+graph TD
+    User[Sales User] --> Frontend[Next.js Frontend]
+    Ops[Ops User] --> Streamlit[Streamlit Ops App]
+    Frontend --> API[FastAPI Backend]
+    Streamlit --> API
+    API --> Auth[JWT and RBAC]
+    API --> DB[(Postgres + pgvector)]
+    API --> Redis[(Redis)]
+    API --> Workers[Celery Workers]
+    Workers --> ML[Lead Scoring and Retraining]
+    API --> AI[OpenAI, Voice, and RAG Services]
+    API --> Observability[Prometheus and Grafana]
 ```
 
-Open:
+## Project Structure
 
-- Frontend: http://localhost:3000
-- Backend docs: http://localhost:8000/docs
-- Streamlit ops: http://localhost:8501
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3001
+- backend/: FastAPI app, API routes, services, database, workers, and security.
+- frontend/: Next.js dashboard and authenticated UI flows.
+- streamlit_app/: operations dashboard for model/admin workflows.
+- ai_models/: lead scoring, retraining, registry, and ML artifacts.
+- deployment/: Render and Railway deployment descriptors.
+- observability/, nginx/, docker-compose.yml: local production-style stack.
+- tests/: backend, auth, AI, health, and retraining tests.
 
-Demo login:
+## Tech Stack
+
+- Python 3.11
+- FastAPI
+- SQLAlchemy
+- Postgres / pgvector
+- Redis
+- Celery
+- Next.js
+- Streamlit
+- Docker Compose
+- Pytest
+
+## Screenshots
+
+Add screenshots to `docs/screenshots/` and reference them here:
+
+| View | Screenshot |
+| --- | --- |
+| dashboard | `docs/screenshots/dashboard.png` |
+| lead details | `docs/screenshots/lead-details.png` |
+| manager ai | `docs/screenshots/manager-ai.png` |
+| ops app | `docs/screenshots/ops-app.png` |
+| observability | `docs/screenshots/observability.png` |
+
+## Local Setup
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+cd frontend
+npm install
+cd ..
+```
+
+Copy `.env.example` to `.env` when the project requires API keys or deployment secrets. Never commit real secrets.
+
+## Local Non-Docker Demo
+
+Demo credentials:
 
 - Email: `admin@demo.com`
 - Password: `Password123!`
 
+Create or repair the local demo administrator:
+
+```powershell
+$env:DATABASE_URL="sqlite:///./sales_ai.db"
+$env:SEED_DEMO_DATA="true"
+python scripts\seed_demo.py
+```
+
+Run the backend from the repository root:
+
+```powershell
+$env:DATABASE_URL="sqlite:///./sales_ai.db"
+$env:REDIS_URL="redis://localhost:6379/0"
+$env:SEED_DEMO_DATA="true"
+$env:REQUIRE_REDIS_FOR_READINESS="false"
+uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000
+```
+
+Run the frontend:
+
+```powershell
+cd frontend
+$env:NEXT_PUBLIC_API_URL="http://localhost:8000/api/v1"
+npm run dev
+```
+
+Open http://localhost:3000/login and sign in with the demo credentials. If port 3000 is already in use, Next.js will print the alternate local URL.
+
+## Docker Run
+
+```powershell
+docker compose up --build
+```
+
+If Docker image pulls fail with Docker Hub or CloudFront `EOF` errors, treat that as a network/registry problem rather than an application failure. Retry on a different network or pre-pull the base images listed in `docs/final_deployment_report.md`.
+
 ## Validation
 
-Run the full production validation:
+```powershell
+pip install -r backend\requirements.txt
+pytest tests
+cd frontend
+npm install
+npm run build
+cd ..
+docker compose config
+$env:POSTGRES_PASSWORD="validation-only"
+docker compose -f docker-compose.prod.yml config
+```
+
+## API Documentation
+
+- Swagger UI: http://localhost:8000/docs
+- GET /health, /live, /ready, /metrics
+- /api/v1/auth/*
+- /api/v1/leads/*
+- /api/v1/customer-memory/*
+- /api/v1/lead-intelligence/*
+- /api/v1/followups/*
+- /api/v1/knowledge-base/*
+- /api/v1/manager-copilot/*
+- /api/v1/calls/*
+- /api/v1/analytics/*
+- /api/v1/ai/*
+
+### LeadForge Voice Agent
+
+Open `http://localhost:3000/calls` and use the LeadForge Voice Agent panel to generate a script, simulate a conversation, review objection intelligence, and save the interaction without placing a phone call.
+
+The Voice Agent supports English, Hindi, and Hinglish scripts, professional/friendly/persuasive tones, deterministic local simulation, call summaries, lead scoring, detected objections, and recommended next actions. Live calls remain consent-gated and require valid Twilio configuration.
+
+New APIs:
+
+- `POST /api/v1/ai/calling-agent/script`
+- `POST /api/v1/ai/calling-agent/simulate`
+- `POST /api/v1/ai/calling-agent/start-call`
+- `POST /api/v1/ai/calling-agent/save-interaction`
+- `GET /api/v1/ai/calling-agent/status`
+
+Live calls require explicit consent, a valid phone number, and all Twilio variables:
+
+```env
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+PUBLIC_BASE_URL=https://your-public-backend.example.com
+```
+
+Without Twilio credentials, script generation and simulation remain available and the live-call endpoint returns a safe configuration message without placing a call.
+- /api/v1/operations/*
+- /api/v1/ws/*
+
+## Testing
+
+Run the test suite when tests are present:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\full_validate.ps1
+pytest
 ```
 
-The script builds Docker images, starts the stack, waits for health, runs migrations, seeds the database, runs backend tests, validates login, checks APIs, checks metrics, verifies Streamlit/Prometheus/Grafana, and simulates a Twilio call intelligence workflow.
+For projects without tests, recommended next steps are smoke tests for imports, artifact loading, and one happy-path workflow.
 
-## Environment Variables
+## Deployment
 
-Backend:
+- Use docker-compose.yml for local orchestration.
+- Use docker-compose.prod.yml for production-style container deployment.
+- Use deployment/render.yaml or deployment/railway.json for cloud setup.
+- Replace all demo credentials and .env.example values with platform secrets.
+- Use managed Postgres and Redis in production.
+- Keep model artifacts in a registry or object storage if they grow.
+- See docs/production_deployment.md and docs/security_checklist.md before production rollout.
 
-- `SECRET_KEY`
-- `DATABASE_URL`
-- `REDIS_URL`
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`
-- `WHISPER_MODEL`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_PHONE_NUMBER`
-- `TWILIO_STREAM_PATH`
-- `MODEL_REGISTRY_DIR`
-- `VECTOR_DB_DIR`
-- `SENTRY_DSN`
-- `OTEL_EXPORTER_OTLP_ENDPOINT`
-- `CORS_ORIGINS`
+## Portfolio Talking Points
 
-Frontend:
+- Built a realistic multi-service AI SaaS system.
+- Implemented auth, RBAC, workers, observability, and AI sales workflows.
+- Packaged the system with Docker and cloud deployment descriptors.
 
-- `NEXT_PUBLIC_API_URL`
-- `NEXT_PUBLIC_WS_URL`
+## Interview Q&A
 
-## Twilio Voice AI
+### Why is this your flagship project?
 
-The voice pipeline supports:
+It combines full-stack product, backend architecture, AI workflows, MLOps, auth, workers, observability, and deployment assets in one system.
 
-- Incoming and outgoing calls
-- Twilio Media Streams WebSocket ingestion
-- Call event persistence
-- Reconnect/retry metadata
-- Recording metadata
-- Whisper transcription
-- Objection detection
-- CRM call and lead updates
-- WhatsApp follow-up events
+### What are the production risks?
 
-Primary endpoints:
+Demo credentials, local compose defaults, and model artifact strategy need hardening before public production use.
 
-- `POST /api/v1/calls/click-to-call`
-- `POST /api/v1/calls/twilio/voice`
-- `POST /api/v1/calls/simulate-stream/{lead_id}`
-- `WS /api/v1/ws/twilio/media`
-- `WS /api/v1/ws/telecaller-copilot/{lead_id}`
+### How would you scale it?
 
-## Streamlit Operations Portal
-
-The operations portal provides:
-
-- Service and dependency health
-- Model registry view
-- Retraining trigger
-- Seed DB button
-- Generate report button
-- Manager copilot chat
-- Analytics charts
-- CSV export
-- Recent logs
-
-## Retraining
-
-Run manually:
-
-```powershell
-docker compose exec backend python /app/ai_models/retrain_pipeline.py
-```
-
-The pipeline trains Logistic Regression and Random Forest. XGBoost is used when optional ML dependencies are installed from `backend/requirements-ml.txt`. Artifacts and manifest files are written to the model registry directory.
-
-## Observability
-
-Backend exposes Prometheus metrics at:
-
-```text
-GET /metrics
-```
-
-Tracked signals:
-
-- API request count
-- API latency
-- AI latency
-- Call failures
-- Service uptime
-- Dependency health
-
-Grafana runs on `http://localhost:3001` with default local credentials `admin/admin`.
-
-## Cloud Deployment
-
-Deployment assets live in `deployment/`:
-
-- `deployment/render.yaml`
-- `deployment/railway.json`
-- `deployment/terraform`
-- `deployment/nginx.production.conf`
-- `deployment/cloud-targets.md`
-
-Supported deployment paths include AWS, Render, Railway, Azure, GCP, and DigitalOcean.
-
-## GitHub Actions
-
-Workflows:
-
-- `.github/workflows/ci.yml`
-- `.github/workflows/deploy.yml`
-
-CI runs backend tests, frontend Docker build, Docker validation, and filesystem security scanning.
-
-## Production Checklist
-
-- Replace demo credentials and `SECRET_KEY`
-- Store all secrets in a real secret manager
-- Configure Twilio webhook URLs and Media Stream URL
-- Configure OpenAI credentials and spending limits
-- Enable managed Postgres backups
-- Add Alembic revisioned migrations before multi-region production
-- Configure Sentry/OpenTelemetry exporters
-- Put Nginx behind TLS with managed certificates
-- Add rate limits for auth and webhook routes
-- Run `scripts/full_validate.ps1` before every release
+Use managed Postgres/Redis, separate worker queues, platform secrets, stricter CORS, and external model/artifact storage.

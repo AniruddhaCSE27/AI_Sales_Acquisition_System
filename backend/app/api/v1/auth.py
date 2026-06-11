@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.api.deps import current_user
+from app.core.config import settings
 from app.core.security import create_access_token, create_refresh_token, hash_password, hash_token, verify_password
 from app.db.session import get_db
 from app.models import AuditLog, RefreshToken, User
@@ -30,7 +31,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User account is inactive")
     refresh = create_refresh_token()
-    db.add(RefreshToken(user_id=user.id, token_hash=hash_token(refresh), expires_at=datetime.utcnow() + timedelta(days=30)))
+    db.add(RefreshToken(user_id=user.id, token_hash=hash_token(refresh), expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)))
     db.add(AuditLog(organization_id=user.organization_id, user_id=user.id, action="auth.login", entity_type="user", entity_id=user.id))
     db.commit()
     return Token(access_token=create_access_token(user.email, user.role.value), refresh_token=refresh, role=user.role)
@@ -62,7 +63,12 @@ async def refresh(request: Request, db: Session = Depends(get_db)):
     user = db.get(User, row.user_id)
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found")
-    return Token(access_token=create_access_token(user.email, user.role.value), refresh_token=token, role=user.role)
+    row.revoked_at = datetime.utcnow()
+    refresh_token = create_refresh_token()
+    db.add(RefreshToken(user_id=user.id, token_hash=hash_token(refresh_token), expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)))
+    db.add(AuditLog(organization_id=user.organization_id, user_id=user.id, action="auth.refresh", entity_type="user", entity_id=user.id))
+    db.commit()
+    return Token(access_token=create_access_token(user.email, user.role.value), refresh_token=refresh_token, role=user.role)
 
 
 @router.post("/logout")

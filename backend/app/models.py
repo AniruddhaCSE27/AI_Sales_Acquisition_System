@@ -7,7 +7,9 @@ from app.db.session import Base
 
 class Role(str, Enum):
     super_admin = "super_admin"
+    admin = "admin"
     manager = "manager"
+    agent = "agent"
     telecaller = "telecaller"
     counsellor = "counsellor"
     publisher = "publisher"
@@ -156,6 +158,36 @@ class Lead(Base):
     publisher = relationship("Publisher")
 
 
+class CustomerMemory(Base):
+    __tablename__ = "customer_memory"
+    __table_args__ = (UniqueConstraint("lead_id", name="uq_customer_memory_lead"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    organization_id: Mapped[int | None] = mapped_column(ForeignKey("organizations.id"), index=True)
+    lead_id: Mapped[int] = mapped_column(ForeignKey("leads.id"), index=True)
+    objections: Mapped[list] = mapped_column(JSON, default=list)
+    sentiment: Mapped[str | None] = mapped_column(String(80), index=True)
+    budget: Mapped[float | None] = mapped_column(Float)
+    preferred_contact_time: Mapped[str | None] = mapped_column(String(120))
+    summary: Mapped[str | None] = mapped_column(Text)
+    next_action: Mapped[str | None] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    lead = relationship("Lead")
+
+
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    organization_id: Mapped[int | None] = mapped_column(ForeignKey("organizations.id"), index=True)
+    title: Mapped[str] = mapped_column(String(255), index=True)
+    source_filename: Mapped[str | None] = mapped_column(String(255))
+    content: Mapped[str] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class ImportBatch(Base):
     __tablename__ = "import_batches"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -189,6 +221,29 @@ class Call(Base):
     intent: Mapped[str | None] = mapped_column(String(120))
     next_action: Mapped[str | None] = mapped_column(String(255))
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AICallSession(Base):
+    __tablename__ = "ai_call_sessions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    organization_id: Mapped[int | None] = mapped_column(ForeignKey("organizations.id"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True)
+    lead_name: Mapped[str] = mapped_column(String(160))
+    phone_number: Mapped[str] = mapped_column(String(40), index=True)
+    objective: Mapped[str] = mapped_column(Text)
+    product: Mapped[str] = mapped_column(String(255))
+    script: Mapped[str | None] = mapped_column(Text)
+    simulation: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), default="script_generated", index=True)
+    summary: Mapped[str | None] = mapped_column(Text)
+    interest_level: Mapped[str | None] = mapped_column(String(40), index=True)
+    sentiment: Mapped[str | None] = mapped_column(String(40), index=True)
+    lead_score: Mapped[float] = mapped_column(Float, default=0.0)
+    objection: Mapped[str | None] = mapped_column(String(80), index=True)
+    suggested_response: Mapped[str | None] = mapped_column(Text)
+    next_action: Mapped[str | None] = mapped_column(Text)
+    twilio_sid: Mapped[str | None] = mapped_column(String(120), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

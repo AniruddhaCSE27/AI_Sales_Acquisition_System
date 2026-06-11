@@ -9,16 +9,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build backend
-      - run: docker compose run --rm -v "$PWD:/workspace" -w /workspace backend pytest tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r backend/requirements.txt
+      - run: pytest tests
+        env:
+          DATABASE_URL: sqlite:///./test_sales_ai.db
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret
 
   frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - run: docker compose build frontend
+      - run: docker compose build backend frontend
+      - run: POSTGRES_PASSWORD=ci-password docker compose -f docker-compose.prod.yml config
 
   security:
     runs-on: ubuntu-latest

@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
+from app.core.permissions import EnterpriseRole, ensure_permission
 from app.core.security import decode_token
 from app.db.session import get_db
 from app.models import Role, User
@@ -26,5 +27,12 @@ def require_roles(*roles: Role):
     def checker(user: User = Depends(current_user)) -> User:
         if user.role not in roles and user.role != Role.super_admin:
             raise HTTPException(status_code=403, detail="Insufficient permissions")
+        return user
+    return checker
+
+
+def require_permissions(*roles: EnterpriseRole):
+    def checker(user: User = Depends(current_user)) -> User:
+        ensure_permission(user, *roles)
         return user
     return checker

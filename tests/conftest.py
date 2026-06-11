@@ -10,3 +10,5 @@ if str(BACKEND) not in sys.path:
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{ROOT / 'test_sales_ai.db'}")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("SECRET_KEY", "test-secret")
+os.environ.setdefault("SEED_DEMO_DATA", "true")
+os.environ.setdefault("REQUIRE_REDIS_FOR_READINESS", "false")

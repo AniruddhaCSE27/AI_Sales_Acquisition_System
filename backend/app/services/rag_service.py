@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from app.models import CallTranscript, Lead, Report, VectorEmbedding
+from app.models import CallTranscript, KnowledgeDocument, Lead, Report, VectorEmbedding
 from app.services.embedding_service import EmbeddingService
 
 
@@ -33,8 +33,33 @@ class RAGService:
         for report in report_query.limit(500).all():
             self.upsert(db, organization_id, "report_embeddings", "report", report.id, f"{report.title} {report.insights}", report.insights)
             count += 1
+        document_query = db.query(KnowledgeDocument)
+        if organization_id is not None:
+            document_query = document_query.filter(KnowledgeDocument.organization_id == organization_id)
+        for document in document_query.limit(1000).all():
+            self.upsert(
+                db,
+                organization_id,
+                "knowledge_base",
+                "knowledge_document",
+                document.id,
+                document.content,
+                {"title": document.title, "source_filename": document.source_filename},
+            )
+            count += 1
         db.commit()
         return {"indexed": count}
+
+    def index_document(self, db: Session, document: KnowledgeDocument) -> None:
+        self.upsert(
+            db,
+            document.organization_id,
+            "knowledge_base",
+            "knowledge_document",
+            document.id,
+            document.content,
+            {"title": document.title, "source_filename": document.source_filename},
+        )
 
     def upsert(self, db: Session, organization_id: int | None, collection: str, entity_type: str, entity_id: int | None, content: str, metadata: dict) -> VectorEmbedding:
         row = (
@@ -82,3 +107,23 @@ class RAGService:
         answer = f"Based on current CRM records: {context_text[:900]}"
         recommendations = ["Prioritize high-score leads", "Review objections by source", "Coach low-conversion follow-up behavior"]
         return {"answer": answer, "recommendations": recommendations, "sources": contexts}
+
+    def search_knowledge_base(self, db: Session, question: str, organization_id: int | None = None, limit: int = 6) -> list[dict]:
+        results = [item for item in self.retrieve(db, question, organization_id, limit=limit) if item["collection"] == "knowledge_base"]
+        return [
+            {
+                "score": item["score"],
+                "document_id": item["entity_id"],
+                "title": item["metadata"].get("title"),
+                "content": item["content"],
+                "citation": f"{item['metadata'].get('title') or 'Knowledge document'}#{item['entity_id']}",
+            }
+            for item in results
+        ]
+
+    def answer_knowledge_base(self, db: Session, question: str, organization_id: int | None = None) -> dict:
+        citations = self.search_knowledge_base(db, question, organization_id)
+        if not citations:
+            return {"answer": "No matching knowledge-base content was found.", "citations": []}
+        answer = " ".join(item["content"] for item in citations[:3])[:900]
+        return {"answer": f"Based on the knowledge base: {answer}", "citations": citations}

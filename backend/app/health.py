@@ -100,7 +100,9 @@ def service_payload(status: str, include_environment: bool = False) -> dict[str,
 
 def ready() -> tuple[bool, dict[str, Any]]:
     payload = service_payload("ok")
-    required = (payload["dependencies"]["database"], payload["dependencies"]["redis"])
+    required = [payload["dependencies"]["database"]]
+    if settings.require_redis_for_readiness:
+        required.append(payload["dependencies"]["redis"])
     ok = all(item["status"] == "ok" for item in required)
     payload["status"] = "ready" if ok else "not_ready"
     return ok, payload

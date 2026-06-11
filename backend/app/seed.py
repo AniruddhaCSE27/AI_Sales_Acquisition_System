@@ -13,6 +13,57 @@ DEMO_USERS = [
 ]
 
 
+def _password_matches(password: str, hashed: str) -> bool:
+    try:
+        return verify_password(password, hashed)
+    except Exception:
+        return False
+
+
+def ensure_demo_admin(db: Session) -> dict[str, int | bool]:
+    """Create or repair only the local demo admin without deleting CRM data."""
+    org = db.query(Organization).filter(Organization.slug == "demo").first()
+    organization_created = org is None
+    if org is None:
+        org = Organization(name="Demo Organization", slug="demo", primary_domain="demo.localhost")
+        db.add(org)
+        db.flush()
+
+    subscription = db.query(Subscription).filter(Subscription.organization_id == org.id).first()
+    if subscription is None:
+        db.add(Subscription(organization_id=org.id, plan="trial", status=SubscriptionStatus.active, seats=25))
+
+    password = settings.seed_default_password or DEMO_PASSWORD
+    user = db.query(User).filter(User.email == "admin@demo.com").first()
+    user_created = user is None
+    if user is None:
+        user = User(
+            name="Demo Admin",
+            email="admin@demo.com",
+            hashed_password=hash_password(password),
+            role=Role.super_admin,
+            is_active=True,
+            organization_id=org.id,
+        )
+        db.add(user)
+    else:
+        user.organization_id = org.id
+        user.name = "Demo Admin"
+        user.role = Role.super_admin
+        user.is_active = True
+        if not _password_matches(password, user.hashed_password):
+            user.hashed_password = hash_password(password)
+    db.flush()
+
+    membership = db.query(OrganizationUser).filter(OrganizationUser.organization_id == org.id, OrganizationUser.user_id == user.id).first()
+    if membership is None:
+        db.add(OrganizationUser(organization_id=org.id, user_id=user.id, role=user.role))
+    else:
+        membership.role = user.role
+    db.commit()
+    return {"user_id": user.id, "user_created": user_created, "organization_created": organization_created}
+
+
 def run_seed(db: Session) -> dict[str, int]:
     ensure_schema(engine)
     counts = {"users": 0, "removed_demo_rows": 0}
@@ -45,26 +96,7 @@ def run_seed(db: Session) -> dict[str, int]:
         db.query(OrganizationUser).filter(OrganizationUser.user_id.in_(demo_user_ids)).delete(synchronize_session=False)
         counts["removed_demo_rows"] += db.query(User).filter(User.id.in_(demo_user_ids)).delete(synchronize_session=False)
 
-    password = settings.seed_default_password or DEMO_PASSWORD
-    for name, email, role in DEMO_USERS:
-        user = db.query(User).filter(User.email == email).first()
-        if user is None:
-            user = User(name=name, email=email, hashed_password=hash_password(password), role=role, is_active=True, organization_id=org.id)
-            db.add(user)
-            counts["users"] += 1
-        else:
-            user.organization_id = org.id
-            user.name = name
-            user.role = role
-            user.is_active = True
-            if not verify_password(password, user.hashed_password):
-                user.hashed_password = hash_password(password)
-        db.flush()
-        membership = db.query(OrganizationUser).filter(OrganizationUser.organization_id == org.id, OrganizationUser.user_id == user.id).first()
-        if membership is None:
-            db.add(OrganizationUser(organization_id=org.id, user_id=user.id, role=user.role))
-        else:
-            membership.role = user.role
-
     db.commit()
+    result = ensure_demo_admin(db)
+    counts["users"] = int(bool(result["user_created"]))
     return counts

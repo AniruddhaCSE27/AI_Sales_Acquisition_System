@@ -10,8 +10,9 @@ import streamlit as st
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8000")
 
-st.set_page_config(page_title="AI Sales Ops", layout="wide")
-st.title("AI Sales Operations Center")
+st.set_page_config(page_title="LeadForge AI", layout="wide")
+st.title("LeadForge AI")
+st.caption("Forge conversations into conversions with autonomous sales intelligence.")
 
 
 def get_json(path: str):
@@ -98,3 +99,5 @@ else:
 
 st.subheader("Pipeline Status")
 st.json({"twilio_streaming": "enabled", "whisper": "enabled", "objection_detection": "enabled", "model_registry": "enabled"})
+st.divider()
+st.caption("LeadForge AI - Forge conversations into conversions with autonomous sales intelligence.")

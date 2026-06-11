@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Sales Acquisition",
-  description: "AI lead intelligence platform for education counselling teams",
+  title: "LeadForge AI",
+  description: "Forge conversations into conversions with autonomous sales intelligence.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -13,4 +13,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

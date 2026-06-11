@@ -16,6 +16,19 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8)
     role: Role
 
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_enterprise_role(cls, value):
+        if isinstance(value, str):
+            normalized = value.strip()
+            enterprise_aliases = {
+                "ADMIN": Role.admin,
+                "MANAGER": Role.manager,
+                "AGENT": Role.agent,
+            }
+            return enterprise_aliases.get(normalized.upper(), normalized.lower())
+        return value
+
 
 class UserRead(BaseModel):
     id: int
@@ -164,3 +177,143 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     recommendations: list[str] = []
+
+
+class CustomerMemoryBase(BaseModel):
+    objections: list[str] = Field(default_factory=list)
+    sentiment: str | None = None
+    budget: float | None = None
+    preferred_contact_time: str | None = None
+    summary: str | None = None
+    next_action: str | None = None
+    metadata_json: dict = Field(default_factory=dict)
+
+
+class CustomerMemoryUpdate(CustomerMemoryBase):
+    pass
+
+
+class CustomerMemoryRead(CustomerMemoryBase):
+    id: int
+    lead_id: int
+    created_at: datetime
+    updated_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class LeadIntelligenceRequest(BaseModel):
+    notes: str | None = None
+
+
+class LeadIntelligenceResponse(BaseModel):
+    lead_id: int
+    lead_score: float
+    lead_score_explanation: dict
+    sentiment: str
+    sentiment_score: float
+    intent: str
+    objections: list[str]
+    next_best_action: str
+
+
+class FollowUpRequest(BaseModel):
+    lead_id: int | None = None
+    channel: str | None = None
+    objective: str | None = None
+    tone: str = "professional"
+
+
+class FollowUpResponse(BaseModel):
+    lead_id: int
+    whatsapp_message: str
+    email_subject: str
+    email_body: str
+    call_script: str
+
+
+class CallingAgentRequest(BaseModel):
+    lead_name: str = Field(min_length=1, max_length=160)
+    phone_number: str = Field(min_length=7, max_length=40)
+    objective: str = Field(min_length=1, max_length=500)
+    product: str = Field(min_length=1, max_length=255)
+    tone: str = "Professional"
+    language: str = "English"
+    consent: bool = False
+
+    @field_validator("tone")
+    @classmethod
+    def validate_tone(cls, value: str) -> str:
+        allowed = {"Professional", "Friendly", "Persuasive"}
+        normalized = value.strip().title()
+        if normalized not in allowed:
+            raise ValueError(f"tone must be one of: {', '.join(sorted(allowed))}")
+        return normalized
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, value: str) -> str:
+        allowed = {"English", "Hindi", "Hinglish"}
+        normalized = value.strip().title()
+        if normalized not in allowed:
+            raise ValueError(f"language must be one of: {', '.join(sorted(allowed))}")
+        return normalized
+
+
+class CallingAgentScriptResponse(BaseModel):
+    opening_line: str
+    qualification_questions: list[str]
+    objection_handling: list[str]
+    closing_line: str
+    full_script: str
+    session_id: int
+
+
+class CallingAgentSimulationResponse(BaseModel):
+    ai_agent_message: str
+    customer_possible_reply: str
+    next_ai_response: str
+    call_summary: str
+    interest_level: str
+    sentiment: str
+    lead_score: float
+    detected_objection: str
+    ai_suggested_response: str
+    next_best_action: str
+    session_id: int
+
+
+class CallingAgentSaveRequest(CallingAgentRequest):
+    script: str | None = None
+    simulation: dict = Field(default_factory=dict)
+    summary: str | None = None
+    interest_level: str | None = None
+    sentiment: str | None = None
+    lead_score: float = 0.0
+    objection: str | None = None
+    suggested_response: str | None = None
+    next_action: str | None = None
+
+
+class KnowledgeDocumentRead(BaseModel):
+    id: int
+    title: str
+    source_filename: str | None
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class KnowledgeSearchResult(BaseModel):
+    score: float
+    document_id: int | None = None
+    title: str | None = None
+    content: str
+    citation: str
+
+
+class KnowledgeAskRequest(BaseModel):
+    question: str
+
+
+class KnowledgeAskResponse(BaseModel):
+    answer: str
+    citations: list[KnowledgeSearchResult]
