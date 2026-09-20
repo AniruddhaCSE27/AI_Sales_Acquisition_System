@@ -216,22 +216,6 @@ For projects without tests, recommended next steps are smoke tests for imports, 
 - Keep model artifacts in a registry or object storage if they grow.
 - See docs/production_deployment.md and docs/security_checklist.md before production rollout.
 
-## Portfolio Talking Points
 
-- Built a realistic multi-service AI SaaS system.
-- Implemented auth, RBAC, workers, observability, and AI sales workflows.
-- Packaged the system with Docker and cloud deployment descriptors.
 
-## Interview Q&A
 
-### Why is this your flagship project?
-
-It combines full-stack product, backend architecture, AI workflows, MLOps, auth, workers, observability, and deployment assets in one system.
-
-### What are the production risks?
-
-Demo credentials, local compose defaults, and model artifact strategy need hardening before public production use.
-
-### How would you scale it?
-
-Use managed Postgres/Redis, separate worker queues, platform secrets, stricter CORS, and external model/artifact storage.
