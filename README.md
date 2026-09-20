@@ -6,10 +6,6 @@ Forge conversations into conversions with autonomous sales intelligence.
 
 LeadForge AI is a production-style enterprise sales intelligence platform for education sales teams, combining CRM workflows, authentication, RBAC, customer memory, lead intelligence, follow-up generation, RAG knowledge base, manager copilots, background jobs, observability, and deployment assets.
 
-## Resume Value
-
-The strongest full-stack SaaS project in the workspace, showing backend architecture, frontend integration, Docker orchestration, MLOps-style retraining, auth, workers, and observability.
-
 ## Features
 
 - JWT authentication with refresh and logout flows.
